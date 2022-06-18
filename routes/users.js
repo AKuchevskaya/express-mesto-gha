@@ -1,18 +1,10 @@
-const router = require('express').Router();
-const User = require('../models/user');
-const { getUsers, createUser } = require('../controllers/users');
+const routerUser = require('express').Router();
+const { createUser, getUsers, findUser } = require('../controllers/users');
 
-router.get('/users', getUsers);
+routerUser.post('/users', createUser);
 
-router.get('/users/:userId', (req, res) => {
-  User.findById(req.params.id)
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
-    .then((user) => res.send({ data: user }))
-    .catch((err) => res.status(500).send({ message: `Произошла ошибка-этот пользователь не найден. ${err}` }));
-});
+routerUser.get('/users', getUsers);
 
-router.post('/users', createUser);
+routerUser.get('/users/:userId', findUser);
 
-module.exports = router;
+module.exports = routerUser;
