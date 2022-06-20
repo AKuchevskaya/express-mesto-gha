@@ -1,5 +1,7 @@
 const User = require('../models/user');
 
+// const ERRORE_CODE = 400;
+
 module.exports.getUsers = (req, res) => {
   User.find({})
     .orFail(() => {
@@ -21,7 +23,7 @@ module.exports.createUser = (req, res) => {
 };
 
 module.exports.findUser = (req, res) => {
-  User.findById({ _id: req.params.userId })
+  User.findById(req.params.userId)
     .orFail(() => {
       throw new Error('NotFound');
     })
