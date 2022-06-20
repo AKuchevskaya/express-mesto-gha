@@ -8,29 +8,25 @@ const { PORT = 3000 } = process.env;
 
 const app = express();
 
-mongoose.connect('mongodb://localhost:27017/mestodb', {
-  family: 4,
-});
+mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('/users', routerUser);
-app.use('/cards', routerCard);
-
 app.use((req, res, next) => {
   req.user = {
-    _id: '62ac9e7b36a9252a1ad9bfa7',
+    _id: '62b03fb012fc43433cbd9bcc',
   };
 
   next();
 });
 
+app.use('/', routerUser);
+app.use('/', routerCard);
 app.use((req, res) => {
   res.status(404).send({ message: 'Страница не существует' });
 });
 
 app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log('App started', PORT);
 });
