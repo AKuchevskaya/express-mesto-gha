@@ -35,7 +35,7 @@ module.exports.findUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(404)
+        res.status(400)
           .send({ message: 'Пользователь по указанному _id не найден' });
       } else res.status(500).send({ message: `Произошла ошибка-этот пользователь не найден. ${err}` });
     });
