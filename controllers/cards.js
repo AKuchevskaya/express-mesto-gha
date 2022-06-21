@@ -1,12 +1,15 @@
 const Card = require('../models/card');
-
+// const CastError = 400;
+// const ValidationError = 400;
+// const NotFoundError = 404;
+// const InternalServerError = 500;
 module.exports.getCards = (req, res) => {
   Card.find({})
     .orFail(() => {
       throw new Error('NotFound');
     })
     .populate('owner')
-    .then((cards) => res.send({ data: cards }))
+    .then((cards) => res.status(200).send({ data: cards }))
     .catch((err) => res.status(500)
       .send({ message: `Ошибка по умолчанию. ${err}` }));
 };
@@ -15,19 +18,15 @@ module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
-    .orFail(() => {
-      throw new Error('NotFound');
-    })
     .then((card) => {
-      if (!card) {
-        res.status(404)
-          .send({ message: 'Переданы некорректные данные при создании карточки' });
-      } else {
-        res.send({ data: card });
-      }
+      res.status(200).send({ data: card });
     })
-    .catch((err) => res.status(500)
-      .send({ message: `Ошибка по умолчанию. ${err}` }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400)
+          .send({ message: 'Переданы некорректные данные при создании карточки' });
+      } else res.status(500).send({ message: `Ошибка по умолчанию. ${err}` });
+    });
 };
 
 module.exports.deleteCard = (req, res) => {
@@ -56,16 +55,9 @@ module.exports.likeCard = (req, res) => {
     .orFail(() => {
       throw new Error('NotFound');
     })
-    .then((card) => {
-      if (!card) {
-        res.status(404)
-          .send({ message: 'Передан несуществующий _id карточки' });
-      } else {
-        res.send({ data: card });
-      }
-    })
+    .then((card) => res.status(200).send({ data: card }))
     .catch((err) => {
-      if (err.name === 'ValidationErrore') {
+      if (err.name === 'CastError') {
         res.status(400)
           .send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
       } else {
@@ -93,7 +85,7 @@ module.exports.dislikeCard = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err.name === 'ValidationErrore') {
+      if (err.name === 'ValidationError') {
         res.status(400)
           .send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
       } else {
