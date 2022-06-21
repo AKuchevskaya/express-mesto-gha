@@ -35,6 +35,8 @@ module.exports.deleteCard = (req, res) => {
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+      } if (err.name === 'CastError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
       } return res.status(500).send({ message: 'Ошибка по умолчанию' });
     });
 };
