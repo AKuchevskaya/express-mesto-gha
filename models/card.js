@@ -4,23 +4,23 @@ const mongoose = require('mongoose');
 const cardSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: [true, 'Обязательно добавьте название картинки'],
     minlength: 2,
     maxlength: 30,
   },
   link: {
     type: String,
-    required: true,
+    required: [true, 'Обязательно добавьте ссылку на картинку'],
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
-    required: true,
+    required: [true, 'Поле owner обязательное'],
   },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
-    required: true,
+    default: [],
   }],
   createdAt: {
     type: Date,

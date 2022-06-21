@@ -1,16 +1,17 @@
 const Card = require('../models/card');
-
-const SUCCESSFUL_STATUS_CODE = 200;
-const CAST_OR_VALIDATION_ERROR_CODE = 400;
-const NOT_FOUND_ERROR_CODE = 404;
-const SERVER_ERROR_CODE = 500;
+const {
+  SUCCESSFUL_STATUS_CODE,
+  CAST_OR_VALIDATION_ERROR_CODE,
+  NOT_FOUND_ERROR_CODE,
+  SERVER_ERROR_CODE,
+} = require('../constants/errors');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .populate('owner')
     .then((cards) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: cards }))
-    .catch((err) => {
-      res.status(SERVER_ERROR_CODE).send({ message: `Ошибка сервера по умолчанию. ${err}` });
+    .catch(() => {
+      res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
 
@@ -23,7 +24,7 @@ module.exports.createCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании карточки' });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: `Переданы некорректные данные при создании карточки. ${err.message}` });
       } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };

@@ -1,14 +1,16 @@
 const User = require('../models/user');
 
-const SUCCESSFUL_STATUS_CODE = 200;
-const CAST_OR_VALIDATION_ERROR_CODE = 400;
-const NOT_FOUND_ERROR_CODE = 404;
-const SERVER_ERROR_CODE = 500;
+const {
+  SUCCESSFUL_STATUS_CODE,
+  CAST_OR_VALIDATION_ERROR_CODE,
+  NOT_FOUND_ERROR_CODE,
+  SERVER_ERROR_CODE,
+} = require('../constants/errors');
 
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: users }))
-    .catch((err) => res.status(SERVER_ERROR_CODE).send({ message: `Ошибка сервера по умолчанию. ${err}` }));
+    .then((users) => res.send({ data: users }))
+    .catch(() => res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' }));
 };
 
 module.exports.createUser = (req, res) => {
@@ -20,7 +22,7 @@ module.exports.createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании пользователя' });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: `Переданы некорректные данные при создании пользователя. ${err.message}` });
       } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
@@ -51,7 +53,6 @@ module.exports.updateUser = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
     .orFail(() => {
@@ -61,7 +62,7 @@ module.exports.updateUser = (req, res) => {
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'ValidationError') {
+      } if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении профиля' });
       } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
@@ -76,7 +77,6 @@ module.exports.updateAvatar = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
     .orFail(() => {
@@ -86,7 +86,7 @@ module.exports.updateAvatar = (req, res) => {
     .catch((err) => {
       if (err.message === 'NotFound') {
         return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'ValidationError') {
+      } if (err.name === 'CastError' || err.name === 'ValidationError') {
         return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении аватара профиля' });
       } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
