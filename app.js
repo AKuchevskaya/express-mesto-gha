@@ -7,6 +7,7 @@ const routerCard = require('./routes/cards');
 const { PORT = 3000 } = process.env;
 
 const app = express();
+const NOT_FOUND_ERROR_CODE = 404;
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
@@ -24,7 +25,7 @@ app.use((req, res, next) => {
 app.use('/', routerUser);
 app.use('/', routerCard);
 app.use((req, res) => {
-  res.status(404).send({ message: 'Страница не существует' });
+  res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Страница не существует' });
 });
 
 app.listen(PORT, () => {

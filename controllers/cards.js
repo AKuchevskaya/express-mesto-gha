@@ -1,14 +1,16 @@
 const Card = require('../models/card');
-// const CastError = 400;
-// const ValidationError = 400;
-// const NotFoundError = 404;
-// const InternalServerError = 500;
+
+const SUCCESSFUL_STATUS_CODE = 200;
+const CAST_OR_VALIDATION_ERROR_CODE = 400;
+const NOT_FOUND_ERROR_CODE = 404;
+const SERVER_ERROR_CODE = 500;
+
 module.exports.getCards = (req, res) => {
   Card.find({})
     .populate('owner')
-    .then((cards) => res.status(200).send({ data: cards }))
+    .then((cards) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: cards }))
     .catch((err) => {
-      res.status(500).send({ message: `Ошибка по умолчанию. ${err}` });
+      res.status(SERVER_ERROR_CODE).send({ message: `Ошибка сервера по умолчанию. ${err}` });
     });
 };
 
@@ -17,12 +19,12 @@ module.exports.createCard = (req, res) => {
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => {
-      res.status(200).send({ data: card });
+      res.status(SUCCESSFUL_STATUS_CODE).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки' });
-      } return res.status(500).send({ message: `Ошибка по умолчанию. ${err}` });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при создании карточки' });
+      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
 
@@ -31,13 +33,13 @@ module.exports.deleteCard = (req, res) => {
     .orFail(() => {
       throw new Error('NotFound');
     })
-    .then((card) => res.status(200).send({ data: card, message: 'Карточка удалена' }))
+    .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card, message: 'Карточка удалена' }))
     .catch((err) => {
       if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Карточка с указанным _id не найдена' });
       } if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
-      } return res.status(500).send({ message: 'Ошибка по умолчанию' });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные для удаления карточки' });
+      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
 
@@ -50,13 +52,13 @@ module.exports.likeCard = (req, res) => {
     .orFail(() => {
       throw new Error('NotFound');
     })
-    .then((card) => res.status(200).send({ data: card }))
+    .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card }))
     .catch((err) => {
       if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id карточки' });
       } if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
-      } return res.status(500).send({ message: 'Ошибка по умолчанию' });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
+      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
 
@@ -69,12 +71,12 @@ module.exports.dislikeCard = (req, res) => {
     .orFail(() => {
       throw new Error('NotFound');
     })
-    .then((card) => res.status(200).send({ data: card }))
+    .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card }))
     .catch((err) => {
       if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки' });
+        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id карточки' });
       } if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
-      } return res.status(500).send({ message: 'Ошибка по умолчанию' });
+        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные для постановки/снятия лайка' });
+      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
 };
