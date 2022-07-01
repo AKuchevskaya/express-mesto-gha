@@ -1,9 +1,8 @@
+[![Tests for sprint 13](https://github.com/AKuchevskaya/express-mesto-gha/actions/workflows/tests-13-sprint.yml/badge.svg)](https://github.com/AKuchevskaya/express-mesto-gha/actions/workflows/tests-13-sprint.yml) 
+[![Tests for sprint 14](https://github.com/AKuchevskaya/express-mesto-gha/actions/workflows/tests-14-sprint.yml/badge.svg)](https://github.com/AKuchevskaya/express-mesto-gha/actions/workflows/tests-14-sprint.yml)
+
 # Проект Mesto фронтенд + бэкенд
-
-
-[![Tests for sprint 13](https://github.com/${AKuchevskaya}/${express-mesto-gha}/actions/workflows/tests-13-sprint.yml/badge.svg)](https://github.com/${AKuchevskaya}/${express-mesto-gha}/actions/workflows/tests-13-sprint.yml) 
-
-[![Tests for sprint 14](https://github.com/${AKuchevskaya}/${express-mesto-gha}/actions/workflows/tests-14-sprint.yml/badge.svg)](https://github.com/${AKuchevskaya}/${express-mesto-gha}/actions/workflows/tests-14-sprint.yml)
+Тема Практической работы №13 - организация работы бэкэнда на Node.js с использованием Express.  
 
 
 ## Ссылка на проект
