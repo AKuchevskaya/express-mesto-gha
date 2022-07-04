@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-
+const cookieParser = require('cookie-parser');
+const { login, createUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
 const routerUser = require('./routes/users');
 const routerCard = require('./routes/cards');
 
@@ -15,16 +17,13 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '62b03fb012fc43433cbd9bcc',
-  };
+app.post('/signin', login);
+app.post('/signup', createUser);
 
-  next();
-});
+app.use(cookieParser());
 
-app.use('/users', routerUser);
-app.use('/cards', routerCard);
+app.use('/users', auth, routerUser);
+app.use('/cards', auth, routerCard);
 
 app.use((req, res) => {
   res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Страница не существует' });
