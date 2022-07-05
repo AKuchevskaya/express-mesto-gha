@@ -1,15 +1,13 @@
 const jwt = require('jsonwebtoken');
+const { CONFLICT_EMAIL_ERROR_CODE } = require('../constants/errors');
 
-// eslint-disable-next-line consistent-return
 module.exports = (req, res, next) => {
   // достаём авторизационный заголовок
   const { authorization } = req.headers;
 
   // убеждаемся, что он есть или начинается с Bearer
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res
-      .status(401)
-      .send({ message: 'Необходима авторизация' });
+    return res.status(CONFLICT_EMAIL_ERROR_CODE).send({ message: 'Пожалуйста авторизуйтесь.' });
   }
   // извлечём токен
   const token = authorization.replace('Bearer ', '');
@@ -20,11 +18,9 @@ module.exports = (req, res, next) => {
     payload = jwt.verify(token, 'some-secret-key');
   } catch (err) {
     // отправим ошибку, если не получилось
-    return res
-      .status(401)
-      .send({ message: 'Необходима авторизация' });
+    return res.status(CONFLICT_EMAIL_ERROR_CODE).send({ message: 'Пожалуйста авторизуйтесь.' });
   }
   req.user = payload; // записываем пейлоуд в объект запроса
 
-  next(); // пропускаем запрос дальше
+  return next(); // пропускаем запрос дальше
 };

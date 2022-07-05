@@ -5,7 +5,9 @@ const User = require('../models/user');
 const {
   SUCCESSFUL_STATUS_CODE,
   CAST_OR_VALIDATION_ERROR_CODE,
+  UNAUTHORIZED_ERROR_CODE,
   NOT_FOUND_ERROR_CODE,
+  CONFLICT_EMAIL_ERROR_CODE,
   SERVER_ERROR_CODE,
 } = require('../constants/errors');
 
@@ -17,19 +19,22 @@ module.exports.login = (req, res) => {
       // создадим токен
       const token = jwt.sign(
         { _id: user._id },
-        'some-secret-key',
+        'very-secret-key',
         { expiresIn: '7d' }, // токен будет просрочен через 7 дней после создания
       );
 
       // вернём токен
       // res.send({ token });
-      res.cookie('jwt', token, { maxAge: 3600000 * 24 * 7, httpOnly: true });
+      res.cookie('jwt', token, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+        sameSite: true,
+      }).status(SUCCESSFUL_STATUS_CODE).end();
     })
     .catch((err) => {
       // ошибка аутентификации
       res
-        .status(401)
-        .send({ message: err.message });
+        .status(UNAUTHORIZED_ERROR_CODE).send({ message: `Некорректный email или пароль. ${err.message}` });
     });
 };
 
@@ -39,8 +44,12 @@ module.exports.createUser = (req, res) => {
     about,
     avatar,
     email,
+    password,
   } = req.body;
-  bcrypt.hash(req.body.password, 10)
+  if (!email || !password) {
+    return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Не передан email или пароль' });
+  }
+  return bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       name,
       about,
@@ -50,10 +59,19 @@ module.exports.createUser = (req, res) => {
     }))
 
     .then((user) => {
-      res.status(SUCCESSFUL_STATUS_CODE).send({ data: user });
+      res.status(SUCCESSFUL_STATUS_CODE)
+        .send({
+          _id: user._id,
+          name: user.name,
+          about: user.about,
+          avatar: user.avatar,
+          email: user.email,
+        });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'MongoServerError') {
+        return res.status(CONFLICT_EMAIL_ERROR_CODE).send({ message: 'Такой email уже существует' });
+      } if (err.name === 'ValidationError') {
         return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: `Переданы некорректные данные при создании пользователя. ${err.message}` });
       } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
     });
