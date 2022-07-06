@@ -33,8 +33,10 @@ module.exports.login = (req, res) => {
     })
     .catch((err) => {
       // ошибка аутентификации
-      res
-        .status(UNAUTHORIZED_ERROR_CODE).send({ message: `Некорректный email или пароль. ${err.message}` });
+
+      if (err.statusCode === 401) {
+        res.status(UNAUTHORIZED_ERROR_CODE).send({ message: err.message });
+      }
     });
 };
 
@@ -47,7 +49,9 @@ module.exports.createUser = (req, res) => {
     password,
   } = req.body;
   if (!email || !password) {
-    return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Не передан email или пароль' });
+    const error = new Error('Не передан email или пароль.');
+    error.statusCode = CAST_OR_VALIDATION_ERROR_CODE;
+    throw error;
   }
   return bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
@@ -70,10 +74,11 @@ module.exports.createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'MongoServerError') {
-        return res.status(CONFLICT_EMAIL_ERROR_CODE).send({ message: 'Такой email уже существует' });
-      } if (err.name === 'ValidationError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: `Переданы некорректные данные при создании пользователя. ${err.message}` });
-      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+        const error = new Error('Такой email уже существует.');
+        error.statusCode = CONFLICT_EMAIL_ERROR_CODE;
+        throw error;
+      }
+      throw err;
     });
 };
 

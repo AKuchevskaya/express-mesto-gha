@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://images.unsplash.com/photo-1648304286277-60fcdb49e504?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=685&q=80',
     validate: {
-      validator: (v) => validator.isURL(v),
+      validator(v) { return /https?:\/\/(www)?(\S+)([\w#!:.?+=&%@!\-/])?/.test(v); },
       message: () => 'Неверный формат ссылки на изображение',
     },
   },
@@ -47,15 +47,18 @@ userSchema.statics.findUserByCredentials = function (email, password) {
   return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        const err = new Error('Неправильные почта или пароль');
+        err.statusCode = 401;
+        throw err;
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            const err = new Error('Неправильные почта или пароль');
+            err.statusCode = 401;
+            throw err;
           }
-
           return user; // теперь user доступен
         });
     });
