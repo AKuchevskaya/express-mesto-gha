@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const { celebrate, Joi } = require('celebrate');
+const { celebrate, Joi, errors } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const routerUser = require('./routes/users');
@@ -31,7 +31,7 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(/^https?:\/\/(www.)?([\w\-\\.]+)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=,]*/),
+    avatar: Joi.string().pattern(/http(s?):\/\/(www\.)?[0-9a-zA-Z-]+\.[a-zA-Z]+([0-9a-zA-Z-._~:?#[\]@!$&'()*+,;=]+)/),
     email: Joi.string().required().email(),
     password: Joi.string().required().min(4),
   }),
@@ -46,12 +46,10 @@ app.use((req, res) => {
   res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Страница не существует' });
 });
 
+app.use(errors());
+
 app.use((err, req, res, next) => {
   if (err.statusCode) {
-    return res.status(err.statusCode).send({ message: err.message });
-  } if (err.statusCode) {
-    return res.status(err.statusCode).send({ message: err.message });
-  } if (err.statusCode) {
     return res.status(err.statusCode).send({ message: err.message });
   }
   console.error(err.stack);
