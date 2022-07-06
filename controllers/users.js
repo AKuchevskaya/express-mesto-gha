@@ -4,17 +4,16 @@ const User = require('../models/user');
 
 const {
   SUCCESSFUL_STATUS_CODE,
-  CAST_OR_VALIDATION_ERROR_CODE,
   UNAUTHORIZED_ERROR_CODE,
-  CONFLICT_EMAIL_ERROR_CODE,
-  SERVER_ERROR_CODE,
+  MONGO_DUPLICATE_ERROR_CODE,
 } = require('../constants/errors');
 
 const BadReqError = require('../errors/BadReqError'); // 400
-// const ForbiddenError = require('../errors/ForbiddenError'); // 403
+const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
 const NotFoundError = require('../errors/NotFoundError'); // 404
+const MongoServerError = require('../errors/MongoServerError'); // 409
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
@@ -27,6 +26,7 @@ module.exports.login = (req, res) => {
       );
 
       // вернём токен
+      // console.log({ token });
       // res.send({ token });
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
@@ -37,13 +37,14 @@ module.exports.login = (req, res) => {
     .catch((err) => {
       // ошибка аутентификации
 
-      if (err.statusCode === 401) {
-        res.status(UNAUTHORIZED_ERROR_CODE).send({ message: err.message });
+      if (err.statusCode === UNAUTHORIZED_ERROR_CODE) {
+        next(new UnauthorizedError('Требуется авторизация.'));
       }
+      next(err);
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -52,9 +53,7 @@ module.exports.createUser = (req, res) => {
     password,
   } = req.body;
   if (!email || !password) {
-    const error = new Error('Не передан email или пароль.');
-    error.statusCode = CAST_OR_VALIDATION_ERROR_CODE;
-    throw error;
+    next(new BadReqError('Не передан email или пароль.'));
   }
   return bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
@@ -76,19 +75,17 @@ module.exports.createUser = (req, res) => {
         });
     })
     .catch((err) => {
-      if (err.name === 'MongoServerError') {
-        const error = new Error('Такой email уже существует.');
-        error.statusCode = CONFLICT_EMAIL_ERROR_CODE;
-        throw error;
+      if (err.statusCode === MONGO_DUPLICATE_ERROR_CODE) {
+        next(new MongoServerError('Такой email уже существует.'));
       }
-      throw err;
+      next(err);
     });
 };
 
-module.exports.getUsers = (req, res) => {
-  User.find({})
+module.exports.getUsers = (req, res, next) => {
+  User.find({}, '-password -__v')
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' }));
+    .catch((err) => next(err));
 };
 
 module.exports.getUser = (req, res, next) => {
