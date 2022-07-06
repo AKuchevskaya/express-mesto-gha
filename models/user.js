@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
+// const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
 
 // описываем модель
 const userSchema = new mongoose.Schema({
@@ -22,19 +22,19 @@ const userSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    default: 'Алена',
+    default: 'Жак-Ив Кусто',
     minlength: [2, 'Слишком короткое имя'],
     maxlength: [30, 'Имя слишком длинное, максимум 30 символов'],
   },
   about: {
     type: String,
-    default: 'Веб-разработчик',
+    default: 'Исследователь',
     minlength: [2, 'Расскажите о себе больше'],
     maxlength: [30, 'К сожалению это поле ограничено, максимум 30 символов'],
   },
   avatar: {
     type: String,
-    default: 'https://images.unsplash.com/photo-1648304286277-60fcdb49e504?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=685&q=80',
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
       validator(v) { return /^https?:\/\/(www.)?([\w\-\\.]+)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=,]*/.test(v); },
       message: () => 'Неверный формат ссылки на изображение',
@@ -44,20 +44,22 @@ const userSchema = new mongoose.Schema({
 
 // добавим метод findUserByCredentials схеме пользователя
 // у него будет два параметра — почта и пароль
-// eslint-disable-next-line func-names
-userSchema.statics.findUserByCredentials = function (email, password) {
+userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
   return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        const err = new UnauthorizedError('Неправильные почта или пароль');
-        throw err;
+        return Promise.reject(new Error('Неправильные почта или пароль'));
+        // const err = new UnauthorizedError('Неправильные почта или пароль');
+        // throw err;
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            const err = new UnauthorizedError('Неправильные почта или пароль');
-            throw err;
+            return Promise.reject(new Error('Неправильные почта или пароль'));
+
+            // const err = new UnauthorizedError('Неправильные почта или пароль');
+            // throw err;
           }
           return user; // теперь user доступен
         });

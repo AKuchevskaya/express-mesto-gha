@@ -1,9 +1,9 @@
-const { MONGO_DUPLICATE_ERROR_CODE } = require('../constants/errors');
+const { CONFLICT_EMAIL_ERROR_CODE } = require('../constants/errors');
 
 class MongoServerError extends Error {
   constructor(message) {
     super(message);
-    this.statusCode = MONGO_DUPLICATE_ERROR_CODE;
+    this.statusCode = CONFLICT_EMAIL_ERROR_CODE;
   }
 }
 

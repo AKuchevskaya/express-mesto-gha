@@ -4,6 +4,7 @@ const {
 } = require('../constants/errors');
 
 const BadReqError = require('../errors/BadReqError'); // 400
+const ForbiddenError = require('../errors/ForbiddenError'); // 403
 const NotFoundError = require('../errors/NotFoundError'); // 404
 
 module.exports.getCards = (req, res, next) => {
@@ -29,11 +30,18 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove({ _id: req.params.cardId })
+  Card.findById(req.params.cardId)
     .orFail(() => {
-      next(new NotFoundError('Карточка с указанным _id не найдена'));
+      next(new NotFoundError('Карточка с указанным _id не найдена.'));
     })
-    .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card, message: 'Карточка удалена' }))
+    .then((card) => {
+      if (card.owner.toString() !== req.user._id) {
+        throw (new ForbiddenError('У вас нет необходимых прав для удаления.'));
+      }
+      Card.findByIdAndRemove({ _id: req.params.cardId })
+        .then((removedCard) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: removedCard, message: 'Карточка удалена' }))
+        .catch(next);
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadReqError('Переданы некорректные данные для удаления карточки'));

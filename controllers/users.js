@@ -5,7 +5,6 @@ const User = require('../models/user');
 const {
   SUCCESSFUL_STATUS_CODE,
   UNAUTHORIZED_ERROR_CODE,
-  MONGO_DUPLICATE_ERROR_CODE,
 } = require('../constants/errors');
 
 const BadReqError = require('../errors/BadReqError'); // 400
@@ -27,12 +26,12 @@ module.exports.login = (req, res, next) => {
 
       // вернём токен
       // console.log({ token });
-      // res.send({ token });
-      res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-        sameSite: true,
-      }).status(SUCCESSFUL_STATUS_CODE).end();
+      res.send({ token });
+      // res.cookie('jwt', token, {
+      //   maxAge: 3600000 * 24 * 7,
+      //   httpOnly: true,
+      //   sameSite: true,
+      // }).status(SUCCESSFUL_STATUS_CODE).end();
     })
     .catch((err) => {
       // ошибка аутентификации
@@ -75,7 +74,7 @@ module.exports.createUser = (req, res, next) => {
         });
     })
     .catch((err) => {
-      if (err.statusCode === MONGO_DUPLICATE_ERROR_CODE) {
+      if (err.name === 'MongoServerError') {
         next(new MongoServerError('Такой email уже существует.'));
       }
       next(err);
@@ -83,26 +82,20 @@ module.exports.createUser = (req, res, next) => {
 };
 
 module.exports.getUsers = (req, res, next) => {
-  User.find({}, '-password -__v')
+  User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => next(err));
+    .catch(next);
 };
 
 module.exports.getUser = (req, res, next) => {
-  User.findById(req.params._id)
+  User.findById(req.user._id)
     .orFail(() => {
       next(new NotFoundError('Передан несуществующий _id пользователя'));
     })
     .then((user) => {
       res.send({ data: user });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadReqError('Передан некорректный _id пользователя'));
-      } else {
-        next(err);
-      }
-    });
+    .catch(next);
 };
 
 module.exports.findUser = (req, res, next) => {
