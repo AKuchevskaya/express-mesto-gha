@@ -101,7 +101,7 @@ module.exports.getUser = (req, res, next) => {
 module.exports.findUser = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail(() => {
-      next(new NotFoundError('Передан несуществующий _id пользователя'));
+      next(new NotFoundError('Пользователь не найден'));
     })
     .then((user) => {
       res.send({ data: user });
