@@ -11,6 +11,10 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: [true, 'Обязательно добавьте ссылку на картинку'],
+    validate: {
+      validator(v) { return /^https?:\/\/(www.)?([\w\-\\.]+)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=,]*/.test(v); },
+      message: () => 'Неверный формат ссылки на картинку',
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,

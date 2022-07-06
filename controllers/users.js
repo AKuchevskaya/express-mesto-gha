@@ -6,10 +6,13 @@ const {
   SUCCESSFUL_STATUS_CODE,
   CAST_OR_VALIDATION_ERROR_CODE,
   UNAUTHORIZED_ERROR_CODE,
-  NOT_FOUND_ERROR_CODE,
   CONFLICT_EMAIL_ERROR_CODE,
   SERVER_ERROR_CODE,
 } = require('../constants/errors');
+
+const BadReqError = require('../errors/BadReqError'); // 400
+// const ForbiddenError = require('../errors/ForbiddenError'); // 403
+const NotFoundError = require('../errors/NotFoundError'); // 404
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
@@ -88,41 +91,41 @@ module.exports.getUsers = (req, res) => {
     .catch(() => res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' }));
 };
 
-module.exports.getUser = (req, res) => {
+module.exports.getUser = (req, res, next) => {
   User.findById(req.params._id)
     .orFail(() => {
-      throw new Error('NotFound');
+      next(new NotFoundError('Передан несуществующий _id пользователя'));
     })
     .then((user) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'CastError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Передан некорректный _id пользователя' });
-      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+      if (err.name === 'CastError') {
+        next(new BadReqError('Передан некорректный _id пользователя'));
+      } else {
+        next(err);
+      }
     });
 };
 
-module.exports.findUser = (req, res) => {
+module.exports.findUser = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail(() => {
-      throw new Error('NotFound');
+      next(new NotFoundError('Передан несуществующий _id пользователя'));
     })
     .then((user) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'CastError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Передан некорректный _id пользователя' });
-      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+      if (err.name === 'CastError') {
+        next(new BadReqError('Передан некорректный _id пользователя'));
+      } else {
+        next(err);
+      }
     });
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(
@@ -134,19 +137,19 @@ module.exports.updateUser = (req, res) => {
     },
   )
     .orFail(() => {
-      throw new Error('NotFound');
+      next(new NotFoundError('Передан несуществующий _id пользователя'));
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении профиля' });
-      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        next(new BadReqError('Переданы некорректные данные при обновлении профиля'));
+      } else {
+        next(err);
+      }
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(
@@ -158,14 +161,14 @@ module.exports.updateAvatar = (req, res) => {
     },
   )
     .orFail(() => {
-      throw new Error('NotFound');
+      next(new NotFoundError('Передан несуществующий _id пользователя'));
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Передан несуществующий _id пользователя' });
-      } if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return res.status(CAST_OR_VALIDATION_ERROR_CODE).send({ message: 'Переданы некорректные данные при обновлении аватара профиля' });
-      } return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        next(new BadReqError('Переданы некорректные данные при обновлении аватара профиля'));
+      } else {
+        next(err);
+      }
     });
 };

@@ -2,9 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const { celebrate, Joi, errors } = require('celebrate');
+const { Joi, celebrate, errors } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+// const validatorErrors = require('./middlewares/validatorErrors');
 const routerUser = require('./routes/users');
 const routerCard = require('./routes/cards');
 
@@ -12,9 +13,9 @@ const { PORT = 3000 } = process.env;
 
 const app = express();
 const {
-  NOT_FOUND_ERROR_CODE,
   SERVER_ERROR_CODE,
 } = require('./constants/errors');
+const NotFoundError = require('./errors/NotFoundError'); // 404
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
@@ -42,18 +43,21 @@ app.use(cookieParser());
 app.use('/users', auth, routerUser);
 app.use('/cards', auth, routerCard);
 
-app.use((req, res) => {
-  res.status(NOT_FOUND_ERROR_CODE).send({ message: 'Страница не существует' });
+app.use((req, res, next) => {
+  next(new NotFoundError('Страница не существует'));
 });
 
-app.use(errors());
+app.use(errors({ message: 'Проверьте корректность введенных данных' }));
+
+// app.use(validatorErrors);
 
 app.use((err, req, res, next) => {
   if (err.statusCode) {
-    return res.status(err.statusCode).send({ message: err.message });
+    res.status(err.statusCode).send({ message: err.message });
   }
   console.error(err.stack);
-  return res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+  res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+  next();
 });
 
 app.listen(PORT, () => {

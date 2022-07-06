@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
 
 // описываем модель
 const userSchema = new mongoose.Schema({
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://images.unsplash.com/photo-1648304286277-60fcdb49e504?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=685&q=80',
     validate: {
-      validator(v) { return /https?:\/\/(www)?(\S+)([\w#!:.?+=&%@!\-/])?/.test(v); },
+      validator(v) { return /^https?:\/\/(www.)?([\w\-\\.]+)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=,]*/.test(v); },
       message: () => 'Неверный формат ссылки на изображение',
     },
   },
@@ -47,16 +48,14 @@ userSchema.statics.findUserByCredentials = function (email, password) {
   return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        const err = new Error('Неправильные почта или пароль');
-        err.statusCode = 401;
+        const err = new UnauthorizedError('Неправильные почта или пароль');
         throw err;
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            const err = new Error('Неправильные почта или пароль');
-            err.statusCode = 401;
+            const err = new UnauthorizedError('Неправильные почта или пароль');
             throw err;
           }
           return user; // теперь user доступен
