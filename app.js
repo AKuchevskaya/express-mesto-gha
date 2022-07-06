@@ -40,9 +40,10 @@ app.post('/signin', celebrate({
 }), login);
 
 app.use(cookieParser());
+app.use(auth);
 
-app.use('/users', auth, routerUser);
-app.use('/cards', auth, routerCard);
+app.use('/users', routerUser);
+app.use('/cards', routerCard);
 
 app.use((req, res, next) => {
   next(new NotFoundError('Страница не существует'));
@@ -50,14 +51,12 @@ app.use((req, res, next) => {
 
 app.use(errors({ message: 'Проверьте корректность введенных данных' }));
 
-// app.use(validatorErrors);
-
 app.use((err, req, res, next) => {
-  if (err.statusCode) {
+  if (err.statusCode === 500) {
+    res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
+  } else {
     res.status(err.statusCode).send({ message: err.message });
   }
-  console.error(err.stack);
-  res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
   next();
 });
 

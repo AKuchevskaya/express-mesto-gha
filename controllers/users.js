@@ -4,13 +4,12 @@ const User = require('../models/user');
 
 const {
   SUCCESSFUL_STATUS_CODE,
-  UNAUTHORIZED_ERROR_CODE,
 } = require('../constants/errors');
 
 const BadReqError = require('../errors/BadReqError'); // 400
 const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
 const NotFoundError = require('../errors/NotFoundError'); // 404
-const MongoServerError = require('../errors/MongoServerError'); // 409
+const ConflictError = require('../errors/ConflictError'); // 409
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
@@ -25,21 +24,17 @@ module.exports.login = (req, res, next) => {
       );
 
       // вернём токен
-      // console.log({ token });
-      res.send({ token });
-      // res.cookie('jwt', token, {
-      //   maxAge: 3600000 * 24 * 7,
-      //   httpOnly: true,
-      //   sameSite: true,
-      // }).status(SUCCESSFUL_STATUS_CODE).end();
-    })
-    .catch((err) => {
-      // ошибка аутентификации
+      // res.send({ token });
 
-      if (err.statusCode === UNAUTHORIZED_ERROR_CODE) {
-        next(new UnauthorizedError('Требуется авторизация.'));
-      }
-      next(err);
+      return res.cookie('jwt', token, {
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+        sameSite: true,
+      }).send({ token });
+    })
+    .catch(() => {
+      // ошибка аутентификации
+      next(new UnauthorizedError('Требуется авторизация.'));
     });
 };
 
@@ -49,12 +44,10 @@ module.exports.createUser = (req, res, next) => {
     about,
     avatar,
     email,
+    // eslint-disable-next-line no-unused-vars
     password,
   } = req.body;
-  if (!email || !password) {
-    next(new BadReqError('Не передан email или пароль.'));
-  }
-  return bcrypt.hash(req.body.password, 10)
+  bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       name,
       about,
@@ -75,10 +68,12 @@ module.exports.createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'MongoServerError') {
-        next(new MongoServerError('Такой email уже существует.'));
+        next(new ConflictError('Такой email уже существует.'));
+        return;
       }
       next(err);
-    });
+    })
+    .catch(next);
 };
 
 module.exports.getUsers = (req, res, next) => {
@@ -109,9 +104,9 @@ module.exports.findUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadReqError('Передан некорректный _id пользователя'));
-      } else {
-        next(err);
+        return;
       }
+      next(err);
     });
 };
 
