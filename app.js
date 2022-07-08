@@ -54,10 +54,9 @@ app.use(errors({ message: 'Проверьте корректность введ�
 app.use((err, req, res, next) => {
   if (err.statusCode === 500) {
     res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
-  } else {
-    res.status(err.statusCode).send({ message: err.message });
   }
-  next();
+  res.status(err.statusCode).send({ message: err.message });
+  next(err);
 });
 
 app.listen(PORT, () => {

@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
+
+const { regex } = require('../constants/regex');
 const UnauthorizedError = require('../errors/UnauthorizedError'); // 401
 
 // описываем модель
@@ -36,7 +38,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
-      validator(v) { return /^https?:\/\/(www.)?([\w\-\\.]+)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=,]*/.test(v); },
+      validator(v) { return regex.test(v); },
       message: () => 'Неверный формат ссылки на изображение',
     },
   },

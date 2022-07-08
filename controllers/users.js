@@ -35,7 +35,8 @@ module.exports.login = (req, res, next) => {
     .catch(() => {
       // ошибка аутентификации
       next(new UnauthorizedError('Требуется авторизация.'));
-    });
+    })
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -69,9 +70,9 @@ module.exports.createUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'MongoServerError') {
         next(new ConflictError('Такой email уже существует.'));
-        return;
+      } else {
+        next(err);
       }
-      next(err);
     })
     .catch(next);
 };
@@ -84,30 +85,26 @@ module.exports.getUsers = (req, res, next) => {
 
 module.exports.getUser = (req, res, next) => {
   User.findById(req.user._id)
-    .orFail(() => {
-      next(new NotFoundError('Передан несуществующий _id пользователя'));
-    })
+    .orFail(new NotFoundError('Передан несуществующий _id пользователя'))
     .then((user) => {
       res.send({ data: user });
     })
-    .catch(next);
+    .catch((err) => next(err));
 };
 
 module.exports.findUser = (req, res, next) => {
   User.findById(req.params.userId)
-    .orFail(() => {
-      next(new NotFoundError('Пользователь не найден'));
-    })
+    .orFail(new NotFoundError('Пользователь не найден'))
     .then((user) => {
       res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadReqError('Передан некорректный _id пользователя'));
-        return;
       }
       next(err);
-    });
+    })
+    .catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {

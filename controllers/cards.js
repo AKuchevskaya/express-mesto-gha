@@ -32,9 +32,7 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
-    .orFail(() => {
-      next(new NotFoundError('Карточка с указанным _id не найдена.'));
-    })
+    .orFail(new NotFoundError('Карточка с указанным _id не найдена.'))
     .then((card) => {
       if (card.owner.toString() !== req.user._id) {
         throw (new ForbiddenError('У вас нет необходимых прав для удаления.'));
@@ -59,9 +57,7 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      next(new NotFoundError('Передан несуществующий _id карточки'));
-    })
+    .orFail(new NotFoundError('Передан несуществующий _id карточки'))
     .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card }))
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -79,9 +75,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(() => {
-      next(new NotFoundError('Передан несуществующий _id карточки'));
-    })
+    .orFail(new NotFoundError('Передан несуществующий _id карточки'))
     .then((card) => res.status(SUCCESSFUL_STATUS_CODE).send({ data: card }))
     .catch((err) => {
       if (err.name === 'CastError') {
