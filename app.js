@@ -56,7 +56,7 @@ app.use((err, req, res, next) => {
     res.status(SERVER_ERROR_CODE).send({ message: 'Ошибка сервера по умолчанию' });
   }
   res.status(err.statusCode).send({ message: err.message });
-  next(err);
+  next();
 });
 
 app.listen(PORT, () => {

@@ -101,8 +101,9 @@ module.exports.findUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadReqError('Передан некорректный _id пользователя'));
+      } else {
+        next(err);
       }
-      next(err);
     })
     .catch(next);
 };
